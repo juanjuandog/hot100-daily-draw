@@ -1,0 +1,478 @@
+:root {
+  --bg-top: #fef3d8;
+  --bg-bottom: #fff7ef;
+  --paper: #fff7df;
+  --paper-edge: #e1c588;
+  --ink: #4e3427;
+  --muted: #856f62;
+  --accent: #f07f5a;
+  --accent-deep: #d85d39;
+  --glass: rgba(255, 255, 255, 0.28);
+  --glass-line: rgba(255, 255, 255, 0.55);
+  --shadow: rgba(105, 68, 40, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family:
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.9), transparent 38%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 36px 20px 48px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-family:
+    "Hannotate SC",
+    "PingFang SC",
+    sans-serif;
+  font-size: 18px;
+  color: var(--accent-deep);
+  letter-spacing: 0.08em;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 54px);
+  line-height: 1.15;
+}
+
+.subtitle {
+  max-width: 760px;
+  margin: 14px auto 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.bottle-panel,
+.status-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42));
+  box-shadow: 0 22px 60px var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.bottle-panel {
+  min-height: 620px;
+  overflow: hidden;
+  padding: 28px;
+}
+
+.spotlight {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.85), transparent 22%),
+    radial-gradient(circle at 70% 15%, rgba(255, 232, 188, 0.75), transparent 24%);
+  pointer-events: none;
+}
+
+.bottle-area {
+  position: relative;
+  min-height: 500px;
+}
+
+.bottle {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  width: min(350px, 62vw);
+  height: 470px;
+  transform: translateX(-50%);
+  transform-origin: center 75%;
+}
+
+.bottle.shaking {
+  animation: bottle-shake 0.95s ease-in-out;
+}
+
+.bottle-cap {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 110px;
+  height: 34px;
+  border-radius: 18px 18px 10px 10px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #f9b98d, #d67a58);
+  box-shadow: 0 10px 18px rgba(154, 89, 61, 0.24);
+}
+
+.bottle-neck {
+  position: absolute;
+  left: 50%;
+  top: 24px;
+  width: 86px;
+  height: 74px;
+  transform: translateX(-50%);
+  border: 3px solid var(--glass-line);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08));
+}
+
+.bottle-body {
+  position: absolute;
+  inset: 92px 0 0;
+  border: 4px solid var(--glass-line);
+  border-radius: 42% 42% 24% 24% / 24% 24% 18% 18%;
+  background:
+    linear-gradient(130deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.12)),
+    linear-gradient(180deg, rgba(255, 240, 209, 0.3), rgba(255, 255, 255, 0.18));
+  overflow: hidden;
+}
+
+.bottle-body::before,
+.bottle-body::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.bottle-body::before {
+  left: 34px;
+  top: 34px;
+  width: 22px;
+  height: 290px;
+}
+
+.bottle-body::after {
+  right: 48px;
+  top: 56px;
+  width: 11px;
+  height: 240px;
+}
+
+.bottle-glow {
+  position: absolute;
+  inset: 120px -24px 0;
+  background: radial-gradient(circle at center, rgba(255, 209, 131, 0.24), transparent 62%);
+  filter: blur(18px);
+  z-index: -1;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 30px;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 64px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(173, 134, 84, 0.35);
+  background: linear-gradient(180deg, rgba(255, 247, 223, 0.95), rgba(241, 222, 176, 0.9));
+  box-shadow: 0 6px 12px rgba(139, 106, 59, 0.12);
+  transform: rotate(var(--r));
+}
+
+.tickets-flight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ticket {
+  position: absolute;
+  top: 96px;
+  width: min(280px, calc(100% - 24px));
+  opacity: 0;
+  pointer-events: auto;
+}
+
+.ticket.hidden {
+  display: none;
+}
+
+.ticket.visible {
+  opacity: 1;
+}
+
+.ticket-left {
+  left: max(0px, calc(50% - 292px));
+}
+
+.ticket-right {
+  right: max(0px, calc(50% - 292px));
+}
+
+.ticket.fly-left {
+  animation: fly-left 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.ticket.fly-right {
+  animation: fly-right 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.ticket-inner {
+  min-height: 206px;
+  padding: 18px 18px 16px;
+  border: 2px solid var(--paper-edge);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 28%),
+    var(--paper);
+  box-shadow: 0 18px 30px rgba(112, 80, 52, 0.16);
+}
+
+.ticket-tag {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(240, 127, 90, 0.12);
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ticket-title {
+  margin: 16px 0 10px;
+  font-size: 24px;
+  line-height: 1.35;
+}
+
+.ticket-meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.complete-button,
+.shake-button {
+  border: 0;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.complete-button:hover,
+.shake-button:hover {
+  transform: translateY(-2px);
+}
+
+.complete-button {
+  min-width: 110px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+  box-shadow: 0 12px 22px rgba(216, 93, 57, 0.28);
+}
+
+.complete-button[disabled] {
+  cursor: default;
+  opacity: 0.68;
+  transform: none;
+}
+
+.controls {
+  position: relative;
+  z-index: 2;
+  margin-top: 72px;
+  text-align: center;
+}
+
+.shake-button {
+  min-width: 170px;
+  padding: 16px 28px;
+  border-radius: 999px;
+  font-family:
+    "Hannotate SC",
+    "PingFang SC",
+    sans-serif;
+  font-size: 24px;
+  color: white;
+  background: linear-gradient(180deg, #ff9d74, #f2764e);
+  box-shadow: 0 18px 30px rgba(240, 127, 90, 0.34);
+}
+
+.shake-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+  transform: none;
+}
+
+.hint {
+  margin: 16px auto 0;
+  max-width: 420px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.side-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.status-card {
+  padding: 22px;
+}
+
+.status-card h2 {
+  margin: 0 0 18px;
+  font-size: 20px;
+}
+
+.status-card dl {
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.status-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(133, 111, 98, 0.22);
+}
+
+.status-card dt,
+.status-card dd {
+  margin: 0;
+}
+
+.status-card dd {
+  font-weight: 700;
+}
+
+.rules {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+@keyframes bottle-shake {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  18% {
+    transform: translateX(-50%) rotate(-8deg);
+  }
+  36% {
+    transform: translateX(-50%) rotate(8deg);
+  }
+  52% {
+    transform: translateX(-50%) rotate(-6deg);
+  }
+  70% {
+    transform: translateX(-50%) rotate(6deg);
+  }
+  86% {
+    transform: translateX(-50%) rotate(-2deg);
+  }
+}
+
+@keyframes fly-left {
+  0% {
+    opacity: 0;
+    transform: translate(90px, 110px) rotate(14deg) scale(0.8);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-10px, 0) rotate(-8deg) scale(1);
+  }
+}
+
+@keyframes fly-right {
+  0% {
+    opacity: 0;
+    transform: translate(-90px, 110px) rotate(-12deg) scale(0.8);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(10px, 0) rotate(7deg) scale(1);
+  }
+}
+
+@media (max-width: 1024px) {
+  .stage {
+    grid-template-columns: 1fr;
+  }
+
+  .bottle-panel {
+    min-height: 700px;
+  }
+
+  .ticket-left {
+    left: 16px;
+  }
+
+  .ticket-right {
+    right: 16px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 24px 14px 36px;
+  }
+
+  .bottle-panel {
+    padding: 20px 16px;
+    min-height: 760px;
+  }
+
+  .bottle {
+    width: min(290px, 78vw);
+    height: 412px;
+  }
+
+  .bottle-area {
+    min-height: 360px;
+  }
+
+  .controls {
+    margin-top: 48px;
+  }
+
+  .ticket {
+    width: min(250px, calc(100% - 20px));
+  }
+}
