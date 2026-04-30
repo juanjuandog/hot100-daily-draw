@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hot100 每日摇题</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Hot100 Daily Draw</p>
+        <h1>15 天摇完一轮 Hot100</h1>
+        <p class="subtitle">
+          做完点完成，让明天的纸条更有期待感。
+        </p>
+      </header>
+
+      <main class="stage">
+        <section class="bottle-panel">
+          <div class="spotlight"></div>
+          <div class="bottle-area">
+            <div class="bottle" id="bottle">
+              <div class="bottle-cap"></div>
+              <div class="bottle-neck"></div>
+              <div class="bottle-body">
+                <div class="confetti-layer" id="confettiLayer"></div>
+              </div>
+              <div class="bottle-glow"></div>
+            </div>
+            <div class="tickets-flight">
+              <article class="ticket ticket-left hidden" id="ticket0"></article>
+              <article class="ticket ticket-right hidden" id="ticket1"></article>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="shake-button" id="shakeButton">摇一摇</button>
+            <p class="hint" id="hintText">
+              今天还没摇题，按下按钮让纸条飞出来吧。
+            </p>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="status-card">
+            <h2>今日状态</h2>
+            <dl>
+              <div>
+                <dt>今日日期</dt>
+                <dd id="todayText">-</dd>
+              </div>
+              <div>
+                <dt>剩余未做</dt>
+                <dd id="remainingCount">-</dd>
+              </div>
+              <div>
+                <dt>本轮已完成</dt>
+                <dd id="completedCount">-</dd>
+              </div>
+              <div>
+                <dt>今日题量</dt>
+                <dd id="todayQuota">-</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="status-card">
+            <h2>抽题规则</h2>
+            <ul class="rules">
+              <li>每轮 15 个刷题日完成 Hot100</li>
+              <li>每天随机分到 6 或 7 道题</li>
+              <li>仅从 Hot100 题库抽取</li>
+              <li>15 天分配完后自动进入下一轮</li>
+              <li>点击完成会写入本地数据库</li>
+            </ul>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <template id="ticketTemplate">
+      <div class="ticket-inner">
+        <span class="ticket-tag">今日题签</span>
+        <h3 class="ticket-title"></h3>
+        <p class="ticket-meta"></p>
+        <button class="complete-button">完成</button>
+      </div>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
