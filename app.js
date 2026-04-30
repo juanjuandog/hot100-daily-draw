@@ -4,6 +4,7 @@ const state = {
   cycleDay: 1,
   cycleTotalDays: 15,
   todayQuota: 0,
+  todayRemaining: 0,
   hasDrawToday: false,
   completedCount: 0,
   remainingCount: 0,
@@ -21,6 +22,7 @@ const elements = {
   hintText: document.getElementById("hintText"),
   todayText: document.getElementById("todayText"),
   todayQuota: document.getElementById("todayQuota"),
+  todayRemaining: document.getElementById("todayRemaining"),
   remainingCount: document.getElementById("remainingCount"),
   completedCount: document.getElementById("completedCount")
 };
@@ -117,6 +119,7 @@ function updateState(nextState) {
   state.cycleDay = nextState.cycleDay;
   state.cycleTotalDays = nextState.cycleTotalDays;
   state.todayQuota = nextState.todayQuota;
+  state.todayRemaining = nextState.todayRemaining;
   state.hasDrawToday = nextState.hasDrawToday;
   state.completedCount = nextState.completedCount;
   state.remainingCount = nextState.remainingCount;
@@ -137,6 +140,7 @@ function render() {
   elements.remainingCount.textContent = `${state.remainingCount} 题`;
   elements.completedCount.textContent = `${state.completedCount} 题`;
   elements.todayQuota.textContent = state.todayQuota ? `${state.todayQuota} 题` : "-";
+  elements.todayRemaining.textContent = `${state.todayRemaining} 题`;
 
   elements.shakeButton.disabled = state.loading;
   elements.shakeButton.textContent = state.loading ? "加载中..." : "摇一摇";
