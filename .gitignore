@@ -1,0 +1,6 @@
+.DS_Store
+.idea/
+.swift-module-cache/
+__pycache__/
+*.pyc
+widget/.build/
