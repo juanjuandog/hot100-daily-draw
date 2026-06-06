@@ -2,7 +2,7 @@ const state = {
   today: "",
   cycleNumber: 1,
   cycleDay: 1,
-  cycleTotalDays: 15,
+  cycleTotalDays: 10,
   todayQuota: 0,
   todayRemaining: 0,
   hasDrawToday: false,

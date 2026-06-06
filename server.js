@@ -5,7 +5,9 @@ const { DatabaseSync } = require("node:sqlite");
 const HOT100 = require("./hot100-data");
 
 const PORT = 4173;
-const CYCLE_TOTAL_DAYS = 15;
+const DAILY_PROBLEM_QUOTA = 10;
+const CYCLE_TOTAL_DAYS = Math.ceil(HOT100.length / DAILY_PROBLEM_QUOTA);
+const FIXED_DAILY_QUOTAS = {};
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, "data");
 const DB_PATH = path.join(DATA_DIR, "hot100.db");
@@ -125,7 +127,7 @@ function getAppState() {
       cycleNumber: getNextCycleNumber(),
       cycleDay: 1,
       cycleTotalDays: CYCLE_TOTAL_DAYS,
-      todayQuota: getPlannedCounts()[0],
+      todayQuota: getPlannedQuotaForDate(today, null),
       todayRemaining: 0,
       hasDrawToday: false,
       completedCount: 0,
@@ -134,7 +136,10 @@ function getAppState() {
     };
   }
 
+  normalizeCyclePlan(cycle.cycle_id, today);
   reconcileCycleProblems(cycle.cycle_id);
+  ensureTodayQuota(cycle.cycle_id, today);
+  normalizeCyclePlan(cycle.cycle_id, today);
 
   const hasDrawToday = Boolean(getTodayCycleDay(cycle.cycle_id, today));
   const drawnDaysCount = getDrawnDaysCount(cycle.cycle_id);
@@ -142,13 +147,14 @@ function getAppState() {
   const completedCount = getCycleCompletedCount(cycle.cycle_id);
   const remainingCount = HOT100.length - completedCount;
   const todayProblems = todayDay ? getTodayProblems(cycle.cycle_id, today) : [];
+  const todayAssignedCount = todayDay ? getAssignedCountForDate(cycle.cycle_id, today) : 0;
 
   return {
     today,
     cycleNumber: cycle.cycle_id,
     cycleDay: todayDay?.day_number || Math.min(drawnDaysCount + 1, CYCLE_TOTAL_DAYS),
     cycleTotalDays: CYCLE_TOTAL_DAYS,
-    todayQuota: todayDay?.planned_count || getNextPlannedQuota(cycle.cycle_id),
+    todayQuota: Math.max(getPlannedQuotaForDate(today, cycle.cycle_id), todayAssignedCount),
     todayRemaining: todayProblems.length,
     hasDrawToday,
     completedCount,
@@ -170,10 +176,13 @@ function createTodayDrawIfNeeded() {
     cycle = createCycle();
   }
 
+  normalizeCyclePlan(cycle.cycle_id, today);
   reconcileCycleProblems(cycle.cycle_id);
 
   const existingDay = getTodayCycleDay(cycle.cycle_id, today);
   if (existingDay) {
+    ensureTodayQuota(cycle.cycle_id, today);
+    normalizeCyclePlan(cycle.cycle_id, today);
     return;
   }
 
@@ -182,15 +191,16 @@ function createTodayDrawIfNeeded() {
     return;
   }
 
+  const plannedCount = getPlannedQuotaForDate(today, cycle.cycle_id);
   const assignedIds = new Set(
     db.prepare("SELECT problem_id FROM cycle_problem_progress WHERE cycle_id = ?").all(cycle.cycle_id).map((row) => row.problem_id)
   );
   const selected = shuffle(HOT100.filter((problem) => !assignedIds.has(problem.id)))
-    .slice(0, Math.min(nextDay.planned_count, HOT100.length - assignedIds.size));
+    .slice(0, Math.min(plannedCount, HOT100.length - assignedIds.size));
   const now = new Date().toISOString();
   db.prepare("INSERT OR IGNORE INTO draw_sessions (draw_date, created_at) VALUES (?, ?)").run(today, now);
-  db.prepare("UPDATE cycle_days SET draw_date = ? WHERE cycle_id = ? AND day_number = ?")
-    .run(today, cycle.cycle_id, nextDay.day_number);
+  db.prepare("UPDATE cycle_days SET draw_date = ?, planned_count = ? WHERE cycle_id = ? AND day_number = ?")
+    .run(today, plannedCount, cycle.cycle_id, nextDay.day_number);
   const insert = db.prepare(`
     INSERT OR IGNORE INTO cycle_problem_progress (cycle_id, problem_id, assigned_day, draw_date, completed_at)
     VALUES (?, ?, ?, ?, NULL)
@@ -274,10 +284,81 @@ function closeCycle(cycleId) {
 }
 
 function getPlannedCounts() {
-  const base = Math.floor(HOT100.length / CYCLE_TOTAL_DAYS);
-  const extra = HOT100.length % CYCLE_TOTAL_DAYS;
-  const counts = Array.from({ length: CYCLE_TOTAL_DAYS }, (_, index) => base + (index < extra ? 1 : 0));
-  return shuffle(counts);
+  return getFixedDailyCounts(HOT100.length);
+}
+
+function normalizeCyclePlan(cycleId, today = null) {
+  const drawnDays = db.prepare(`
+    SELECT day_number
+    FROM cycle_days
+    WHERE cycle_id = ? AND draw_date IS NOT NULL
+    ORDER BY day_number ASC
+  `).all(cycleId);
+
+  if (drawnDays.length > CYCLE_TOTAL_DAYS) {
+    return;
+  }
+
+  const targetCounts = getPlannedCounts();
+  if (today) {
+    const todayDay = getTodayCycleDay(cycleId, today);
+
+    if (todayDay) {
+      db.prepare("UPDATE cycle_days SET planned_count = ? WHERE cycle_id = ? AND day_number = ?")
+        .run(targetCounts[todayDay.day_number - 1] ?? todayDay.planned_count, cycleId, todayDay.day_number);
+    }
+  }
+
+  db.prepare(`
+    DELETE FROM cycle_days
+    WHERE cycle_id = ? AND draw_date IS NULL AND day_number > ?
+  `).run(cycleId, CYCLE_TOTAL_DAYS);
+
+  const insertDay = db.prepare(`
+    INSERT OR IGNORE INTO cycle_days (cycle_id, day_number, planned_count, draw_date)
+    VALUES (?, ?, 0, NULL)
+  `);
+
+  for (let dayNumber = 1; dayNumber <= CYCLE_TOTAL_DAYS; dayNumber += 1) {
+    insertDay.run(cycleId, dayNumber);
+  }
+
+  const undrawnDays = db.prepare(`
+    SELECT day_number
+    FROM cycle_days
+    WHERE cycle_id = ? AND draw_date IS NULL
+    ORDER BY day_number ASC
+  `).all(cycleId);
+
+  if (!undrawnDays.length) {
+    return;
+  }
+
+  const assignedRow = db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM cycle_problem_progress
+    WHERE cycle_id = ?
+  `).get(cycleId);
+  const remainingToAssign = Math.max(HOT100.length - assignedRow.count, 0);
+  const plannedCounts = getFixedDailyCounts(remainingToAssign);
+  const updateDay = db.prepare(`
+    UPDATE cycle_days
+    SET planned_count = ?
+    WHERE cycle_id = ? AND day_number = ?
+  `);
+
+  undrawnDays.forEach((day, index) => {
+    updateDay.run(plannedCounts[index] ?? 0, cycleId, day.day_number);
+  });
+}
+
+function getFixedDailyCounts(total) {
+  const slots = Math.ceil(total / DAILY_PROBLEM_QUOTA);
+
+  return Array.from({ length: slots }, (_, index) => {
+    const assignedBefore = index * DAILY_PROBLEM_QUOTA;
+    return Math.min(DAILY_PROBLEM_QUOTA, total - assignedBefore);
+  });
 }
 
 function getTodayCycleDay(cycleId, today) {
@@ -311,6 +392,120 @@ function getDrawnDaysCount(cycleId) {
 function getNextPlannedQuota(cycleId) {
   const row = getNextUndrawnDay(cycleId);
   return row?.planned_count ?? 0;
+}
+
+function getFixedQuotaForDate(dateKey) {
+  const fixedQuota = FIXED_DAILY_QUOTAS[dateKey];
+  return typeof fixedQuota === "number" ? fixedQuota : null;
+}
+
+function getPlannedQuotaForDate(dateKey, cycleId) {
+  const fixedQuota = getFixedQuotaForDate(dateKey);
+
+  if (fixedQuota !== null) {
+    return fixedQuota;
+  }
+
+  if (cycleId) {
+    const todayDay = getTodayCycleDay(cycleId, dateKey);
+
+    if (todayDay) {
+      return todayDay.planned_count;
+    }
+
+    return getNextPlannedQuota(cycleId);
+  }
+
+  return getPlannedCounts()[0];
+}
+
+function ensureTodayQuota(cycleId, today) {
+  const todayDay = getTodayCycleDay(cycleId, today);
+
+  if (!todayDay) {
+    return;
+  }
+
+  const baseQuota = getFixedQuotaForDate(today) ?? (todayDay.planned_count || getPlannedQuotaForDate(today, cycleId));
+  const desiredCount = Math.min(baseQuota, getRemainingProblemCount(cycleId) + getCompletedCountForDate(cycleId, today));
+  const assignedRows = db.prepare(`
+    SELECT problem_id
+    FROM cycle_problem_progress
+    WHERE cycle_id = ? AND draw_date = ?
+    ORDER BY problem_id ASC
+  `).all(cycleId, today);
+
+  if (assignedRows.length >= desiredCount) {
+    if (!todayDay.planned_count) {
+      db.prepare("UPDATE cycle_days SET planned_count = ? WHERE cycle_id = ? AND day_number = ?")
+        .run(desiredCount, cycleId, todayDay.day_number);
+    }
+    return;
+  }
+
+  const movableRows = db.prepare(`
+    SELECT problem_id
+    FROM cycle_problem_progress
+    WHERE cycle_id = ? AND completed_at IS NULL AND draw_date != ?
+    ORDER BY assigned_day ASC, problem_id ASC
+  `).all(cycleId, today);
+  const missingCount = desiredCount - assignedRows.length;
+  const rowsToMove = movableRows.slice(0, missingCount);
+  const updateStmt = db.prepare(`
+    UPDATE cycle_problem_progress
+    SET assigned_day = ?, draw_date = ?
+    WHERE cycle_id = ? AND problem_id = ?
+  `);
+
+  for (const row of rowsToMove) {
+    updateStmt.run(todayDay.day_number, today, cycleId, row.problem_id);
+  }
+
+  const assignedCountAfterMoves = assignedRows.length + rowsToMove.length;
+  const unassignedMissingCount = desiredCount - assignedCountAfterMoves;
+
+  if (unassignedMissingCount > 0) {
+    const assignedIds = new Set(
+      db.prepare("SELECT problem_id FROM cycle_problem_progress WHERE cycle_id = ?")
+        .all(cycleId)
+        .map((row) => row.problem_id)
+    );
+    const selected = shuffle(HOT100.filter((problem) => !assignedIds.has(problem.id)))
+      .slice(0, unassignedMissingCount);
+    const insertStmt = db.prepare(`
+      INSERT OR IGNORE INTO cycle_problem_progress (cycle_id, problem_id, assigned_day, draw_date, completed_at)
+      VALUES (?, ?, ?, ?, NULL)
+    `);
+
+    for (const problem of selected) {
+      insertStmt.run(cycleId, problem.id, todayDay.day_number, today);
+    }
+  }
+
+  db.prepare("UPDATE cycle_days SET planned_count = ? WHERE cycle_id = ? AND day_number = ?")
+    .run(desiredCount, cycleId, todayDay.day_number);
+}
+
+function getRemainingProblemCount(cycleId) {
+  return HOT100.length - getCycleCompletedCount(cycleId);
+}
+
+function getCompletedCountForDate(cycleId, today) {
+  const row = db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM cycle_problem_progress
+    WHERE cycle_id = ? AND draw_date = ? AND completed_at IS NOT NULL
+  `).get(cycleId, today);
+  return row.count;
+}
+
+function getAssignedCountForDate(cycleId, today) {
+  const row = db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM cycle_problem_progress
+    WHERE cycle_id = ? AND draw_date = ?
+  `).get(cycleId, today);
+  return row.count;
 }
 
 function getCycleCompletedCount(cycleId) {
