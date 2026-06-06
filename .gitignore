@@ -3,5 +3,6 @@
 .swift-module-cache/
 __pycache__/
 *.pyc
-widget/.build/
 data/
+*.db
+widget/

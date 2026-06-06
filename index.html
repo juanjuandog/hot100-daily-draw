@@ -1,274 +1,97 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hot 100 算法专题</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260411-home-nav2">
-</head>
-<body>
-  <section class="home-view" id="homeView">
-    <div class="home-hero">
-      <h1>卷卷不coding</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hot100 每日摇题</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Hot100 Daily Draw</p>
+        <h1>每天 10 道 Hot100</h1>
+        <p class="subtitle">
+          做完点完成，让明天的纸条更有期待感。
+        </p>
+      </header>
+
+      <main class="stage">
+        <section class="bottle-panel">
+          <div class="spotlight"></div>
+          <div class="bottle-area">
+            <div class="bottle" id="bottle">
+              <div class="bottle-cap"></div>
+              <div class="bottle-neck"></div>
+              <div class="bottle-body">
+                <div class="confetti-layer" id="confettiLayer"></div>
+              </div>
+              <div class="bottle-glow"></div>
+            </div>
+            <div class="tickets-flight">
+              <article class="ticket ticket-left hidden" id="ticket0"></article>
+              <article class="ticket ticket-right hidden" id="ticket1"></article>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="shake-button" id="shakeButton">摇一摇</button>
+            <p class="hint" id="hintText">
+              今天还没摇题，按下按钮让纸条飞出来吧。
+            </p>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="status-card">
+            <h2>今日状态</h2>
+            <dl>
+              <div>
+                <dt>今日日期</dt>
+                <dd id="todayText">-</dd>
+              </div>
+              <div>
+                <dt>剩余未做</dt>
+                <dd id="remainingCount">-</dd>
+              </div>
+              <div>
+                <dt>本轮已完成</dt>
+                <dd id="completedCount">-</dd>
+              </div>
+              <div>
+                <dt>今日题量</dt>
+                <dd id="todayQuota">-</dd>
+              </div>
+              <div>
+                <dt>今日未做</dt>
+                <dd id="todayRemaining">-</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="status-card">
+            <h2>抽题规则</h2>
+            <ul class="rules">
+              <li>每天固定安排 10 道题</li>
+              <li>做完 100 道后自动进入下一轮</li>
+              <li>仅从 Hot100 题库抽取</li>
+              <li>最后一天不足 10 道时按剩余题量安排</li>
+              <li>点击完成会写入本地数据库</li>
+            </ul>
+          </section>
+        </aside>
+      </main>
     </div>
-    <div class="home-grid" id="homeGrid"></div>
-  </section>
 
-  <section class="home-view" id="algorithmHomeView" hidden>
-    <div class="home-hero">
-      <button class="back-home-button algorithm-home-back" id="algorithmHomeBackBtn" type="button" aria-label="返回主页">←</button>
-      <h1>算法</h1>
-    </div>
-    <div class="algorithm-home-grid">
-      <button class="algorithm-entry-card" type="button" id="openHot100Btn">
-        <h2>Hot100</h2>
-        <p>继续使用当前专题与题目浏览结构。</p>
-      </button>
-      <button class="algorithm-entry-card" type="button" id="openClassic150Btn">
-        <h2>面试经典150</h2>
-        <p>结构与 Hot100 一致，当前内容先保持待填充状态。</p>
-      </button>
-    </div>
-  </section>
-
-  <div class="app-shell" id="hot100View" hidden>
-    <aside class="sidebar">
-      <div class="brand-block">
-        <button class="back-home-button" id="backHomeBtn" type="button" aria-label="返回主页">←</button>
-        <h1 id="algorithmPageTitle">Hot100</h1>
+    <template id="ticketTemplate">
+      <div class="ticket-inner">
+        <span class="ticket-tag">今日题签</span>
+        <h3 class="ticket-title"></h3>
+        <p class="ticket-meta"></p>
+        <button class="complete-button">完成</button>
       </div>
+    </template>
 
-      <section class="topic-panel">
-        <div class="topic-panel-header">
-          <p class="eyebrow">专题列表</p>
-          <div class="topic-panel-actions">
-            <h2>算法专题</h2>
-            <button class="small-outline-button" id="openAddQuestionBtn" type="button">新增题目</button>
-          </div>
-        </div>
-        <nav class="topic-nav" id="topicNav" aria-label="算法专题导航"></nav>
-      </section>
-    </aside>
-
-    <main class="content-area">
-      <section class="panel problem-panel">
-        <div class="panel-header">
-          <div>
-            <h3 id="problemTitle">示例题目占位</h3>
-          </div>
-          <div class="problem-meta">
-            <button class="nav-arrow" id="prevQuestionBtn" type="button" aria-label="上一题">←</button>
-            <span class="topic-tag" id="topicTag">哈希</span>
-            <button class="icon-action favorite-action" id="favoriteQuestionBtn" type="button" aria-label="收藏题目" title="收藏题目">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 4.8l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 10l5-.7L12 4.8z"></path>
-              </svg>
-            </button>
-            <button class="nav-arrow" id="nextQuestionBtn" type="button" aria-label="下一题">→</button>
-          </div>
-        </div>
-        <div class="intro-block" id="introBlock">
-          <div id="problemIntro">
-            这里先保留题目介绍区域，后续你给我每个专题下的具体题目后，我会继续补全题意、输入输出要求和示例说明。
-          </div>
-        </div>
-      </section>
-
-      <section class="panel tab-panel">
-        <div class="tab-header">
-          <div class="tab-buttons">
-            <button class="tab-button active" type="button" data-tab="core">核心代码模式</button>
-            <button class="tab-button" type="button" data-tab="acm">ACM 模式</button>
-            <button class="tab-button" type="button" data-tab="analysis">具体解析</button>
-          </div>
-          <div class="analysis-actions" id="analysisActions" hidden>
-            <button class="icon-action" id="editAnalysisBtn" type="button" aria-label="编辑解析" title="编辑解析">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 20l3.5-.7L18.2 8.6a1.8 1.8 0 0 0 0-2.5l-.3-.3a1.8 1.8 0 0 0-2.5 0L4.7 16.5 4 20z"></path>
-                <path d="M13.8 6.2l4 4"></path>
-              </svg>
-            </button>
-            <button class="icon-action" id="saveAnalysisBtn" type="button" aria-label="保存解析" title="保存解析">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 4h9l3 3v13H6z"></path>
-                <path d="M9 4v6h6V4"></path>
-                <path d="M9 18h6"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="tab-content active" id="tab-core">
-          <div class="editable-code-block">
-            <pre id="coreCodePreview"><code id="coreCode"></code></pre>
-            <textarea
-              class="code-editor"
-              id="coreCodeEditor"
-              spellcheck="false"
-              style="display: none;"
-              hidden
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="tab-content" id="tab-acm">
-          <div class="editable-code-block">
-            <pre id="acmCodePreview"><code id="acmCode"></code></pre>
-            <textarea
-              class="code-editor"
-              id="acmCodeEditor"
-              spellcheck="false"
-              style="display: none;"
-              hidden
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="tab-content" id="tab-analysis">
-          <div
-            class="analysis-copy"
-            id="analysisText"
-            contenteditable="false"
-            spellcheck="false"
-          ></div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <div class="app-shell" id="sectionView" hidden>
-    <aside class="sidebar">
-      <div class="brand-block">
-        <button class="back-home-button" id="sectionBackBtn" type="button" aria-label="返回主页">←</button>
-        <h1 id="sectionTitle">Java基础</h1>
-      </div>
-
-      <section class="topic-panel">
-        <div class="topic-panel-header">
-          <div class="topic-panel-actions">
-            <p class="eyebrow">题目顺序</p>
-            <button class="small-outline-button" id="openAddSectionItemBtn" type="button">新增题目</button>
-          </div>
-        </div>
-        <nav class="topic-nav" id="sectionQuestionNav" aria-label="栏目问题导航"></nav>
-      </section>
-    </aside>
-
-    <main class="content-area">
-      <section class="panel problem-panel">
-        <div class="panel-header">
-          <div>
-            <h3 id="sectionQuestionTitle">问题 1</h3>
-          </div>
-          <div class="problem-meta">
-            <button class="nav-arrow" id="sectionPrevQuestionBtn" type="button" aria-label="上一题">←</button>
-            <span class="topic-tag" id="sectionTopicTag">Java基础 / 1</span>
-            <button class="icon-action favorite-action" id="sectionFavoriteBtn" type="button" aria-label="收藏题目" title="收藏题目">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 4.8l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 10l5-.7L12 4.8z"></path>
-              </svg>
-            </button>
-            <button class="nav-arrow" id="sectionNextQuestionBtn" type="button" aria-label="下一题">→</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel tab-panel">
-        <div class="tab-header">
-          <div class="tab-buttons">
-            <button class="tab-button active" type="button">具体答案</button>
-          </div>
-          <div class="analysis-actions">
-            <button class="icon-action" id="editSectionBtn" type="button" aria-label="编辑答案" title="编辑答案">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 20l3.5-.7L18.2 8.6a1.8 1.8 0 0 0 0-2.5l-.3-.3a1.8 1.8 0 0 0-2.5 0L4.7 16.5 4 20z"></path>
-                <path d="M13.8 6.2l4 4"></path>
-              </svg>
-            </button>
-            <button class="icon-action" id="saveSectionBtn" type="button" aria-label="保存答案" title="保存答案">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 4h9l3 3v13H6z"></path>
-                <path d="M9 4v6h6V4"></path>
-                <path d="M9 18h6"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div class="section-answer-block">
-          <div class="analysis-copy" id="sectionAnswerBody"></div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <div class="modal-backdrop" id="addQuestionModal" hidden>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>新增题目</h3>
-        <button class="icon-action" id="closeAddQuestionBtn" type="button" aria-label="关闭新增题目">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 6 18 18"></path>
-            <path d="M18 6 6 18"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-form">
-        <label class="modal-field">
-          <span>专题</span>
-          <select id="addQuestionTopicSelect"></select>
-        </label>
-        <label class="modal-field">
-          <span>题号</span>
-          <input id="addQuestionIdInput" type="text" placeholder="可留空，默认按顺序生成" />
-        </label>
-        <label class="modal-field">
-          <span>题目标题</span>
-          <input id="addQuestionTitleInput" type="text" placeholder="请输入题目标题" />
-        </label>
-        <label class="modal-field">
-          <span>题目简介</span>
-          <textarea id="addQuestionIntroInput" rows="5" placeholder="可选，先写题目简介"></textarea>
-        </label>
-      </div>
-      <div class="modal-actions">
-        <button class="small-outline-button" id="cancelAddQuestionBtn" type="button">取消</button>
-        <button class="small-primary-button" id="saveAddQuestionBtn" type="button">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="addSectionItemModal" hidden>
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="sectionItemModalTitle">新增题目</h3>
-        <button class="icon-action" id="closeAddSectionItemBtn" type="button" aria-label="关闭新增题目">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 6 18 18"></path>
-            <path d="M18 6 6 18"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-form">
-        <label class="modal-field">
-          <span>内容</span>
-          <textarea id="addSectionItemContentInput" rows="8" placeholder="第一行写问题，下面换行写答案"></textarea>
-        </label>
-      </div>
-      <div class="modal-actions">
-        <button class="small-outline-button" id="cancelAddSectionItemBtn" type="button">取消</button>
-        <button class="small-primary-button" id="saveAddSectionItemBtn" type="button">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="context-menu" id="sectionQuestionContextMenu" hidden>
-    <button class="context-menu-item" id="editSectionQuestionMenuItem" type="button">修改</button>
-    <button class="context-menu-item danger" id="deleteSectionQuestionMenuItem" type="button">删除</button>
-  </div>
-
-  <script src="script.js?v=20260413-context-richtext"></script>
-</body>
+    <script src="./app.js"></script>
+  </body>
 </html>
